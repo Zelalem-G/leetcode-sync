@@ -123,7 +123,7 @@ async function getInfo(submission, session, csrfToken) {
       log(
         "Error fetching submission info, retrying in " +
           3 ** retryCount +
-          " seconds..."
+          " seconds...",
       );
       await delay(3 ** retryCount * 1000);
       return getInfo(maxRetries, retryCount + 1);
@@ -243,7 +243,7 @@ async function getQuestionData(titleSlug, leetcodeSession, csrfToken) {
     const response = await axios.post(
       "https://leetcode.com/graphql/",
       graphql,
-      { headers }
+      { headers },
     );
     const result = await response.data;
     return result.data.question.content;
@@ -267,7 +267,8 @@ function addToSubmissions(params) {
     submissions,
   } = params;
 
-  for (const submission of response.data.data.submissionList.submissions) {
+  for (const submission of response.data.data.questionSubmissionList
+    .submissions) {
     submissionTimestamp = Number(submission.timestamp);
     if (submissionTimestamp <= lastTimestamp) {
       return false;
@@ -325,7 +326,7 @@ async function sync(inputs) {
   for (const commit of commits.data) {
     if (
       !commit.commit.message.startsWith(
-        !!commitHeader ? commitHeader : COMMIT_MESSAGE
+        !!commitHeader ? commitHeader : COMMIT_MESSAGE,
       )
     ) {
       continue;
@@ -348,7 +349,7 @@ async function sync(inputs) {
         const slug = undefined;
         const graphql = JSON.stringify({
           query: `query ($offset: Int!, $limit: Int!, $slug: String) {
-              submissionList(offset: $offset, limit: $limit, questionSlug: $slug) {
+              questionSubmissionList(offset: $offset, limit: $limit, questionSlug: $slug) {
                   hasNext
                   submissions {
                       id
@@ -373,7 +374,7 @@ async function sync(inputs) {
         const response = await axios.post(
           "https://leetcode.com/graphql/",
           graphql,
-          { headers }
+          { headers },
         );
         log(`Successfully fetched submission from LeetCode, offset ${offset}`);
         return response;
@@ -384,7 +385,7 @@ async function sync(inputs) {
         log(
           "Error fetching submissions, retrying in " +
             3 ** retryCount +
-            " seconds..."
+            " seconds...",
         );
         // There's a rate limit on LeetCode API, so wait with backoff before retrying.
         await delay(3 ** retryCount * 1000);
@@ -412,7 +413,7 @@ async function sync(inputs) {
     }
 
     offset += 20;
-  } while (response.data.data.submissionList.hasNext);
+  } while (response.data.data.questionSubmissionList.hasNext);
 
   // We have all submissions we want to write to GitHub now.
   // First, get the default branch to write to.
@@ -431,7 +432,7 @@ async function sync(inputs) {
     submission = await getInfo(
       submissions[i],
       leetcodeSession,
-      leetcodeCSRFToken
+      leetcodeCSRFToken,
     );
 
     if (submission === null) {
@@ -443,7 +444,7 @@ async function sync(inputs) {
     const questionData = await getQuestionData(
       submission.titleSlug,
       leetcodeSession,
-      leetcodeCSRFToken
+      leetcodeCSRFToken,
     );
     if (questionData === null) {
       // Skip this submission if question data is null (locked problem)
